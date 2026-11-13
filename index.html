@@ -47,7 +47,7 @@ select,button{font:inherit;color:var(--ink)}
 select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 6px;font-size:13px}
 .icon-btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;width:34px;height:32px;display:grid;place-items:center;cursor:pointer}
 .icon-btn svg{width:18px;height:18px;stroke:var(--ink)}
-nav{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 nav button{border:0;background:transparent;border-radius:8px;padding:8px 4px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted)}
 nav button[aria-pressed="true"]{background:var(--felt);color:#fff}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -107,6 +107,24 @@ nav button[aria-pressed="true"]{background:var(--felt);color:#fff}
 .done .num{font-family:var(--f-display);font-size:44px;line-height:1}
 @media (max-width:420px){ .names{grid-template-columns:repeat(4,1fr)} .names.acc{grid-template-columns:repeat(3,1fr)} h1{font-size:19px} }
 @media (prefers-reduced-motion:no-preference){ .wk,.bk,.names button{transition:background-color .12s} }
+nav button{font-size:13px;padding:8px 2px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.opts button{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:16px 6px;font-family:var(--f-display);font-weight:700;font-size:24px;cursor:pointer}
+.opts button:active{transform:scale(.97)}
+.opts button.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.opts button.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.timer{width:100%;height:6px;border-radius:3px;background:var(--bg);overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--felt);transform-origin:left}
+.hearts{color:var(--felt);letter-spacing:2px}
+.lvl-up{color:var(--gold);font-family:var(--f-display);font-weight:700}
+.start{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:10px 0}
+.start ul{margin:0;padding:0;list-style:none;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:no-preference){.pop{animation:pop .35s}}
+#game.is-game>.desc{order:0} #game.is-game>.stats{order:1} #game.is-game>#stage{order:2;min-height:0;padding:6px 10px}
+#game.is-game>#answer{order:3} #game.is-game>#fb{order:4;min-height:22px} #game.is-game>#kbWrap{order:5} #game.is-game>.kb-legend{order:6}
+#game.is-game #staff{max-height:150px}
+#game.is-game .opts button{padding:12px 6px;font-size:22px}
 </style>
 </head>
 <body>
@@ -114,7 +132,7 @@ nav button[aria-pressed="true"]{background:var(--felt);color:#fff}
 
 <div class="wrap">
   <header>
-    <h1>Piano Note Trainer <small>v1.1</small></h1>
+    <h1>Piano Note Trainer <small>v1.2</small></h1>
     <div class="hdr-r">
       <select id="langSel" aria-label="Language"><option value="es">ES</option><option value="en">EN</option><option value="fr">FR</option></select>
       <button class="icon-btn" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
@@ -122,7 +140,7 @@ nav button[aria-pressed="true"]{background:var(--felt);color:#fff}
   </header>
 
   <nav id="modes">
-    <button data-m="read"></button><button data-m="name"></button><button data-m="ear"></button><button data-m="prog"></button>
+    <button data-m="game"></button><button data-m="read"></button><button data-m="name"></button><button data-m="ear"></button><button data-m="prog"></button>
   </nav>
 
   <section id="game" class="wrap-inner" style="display:flex;flex-direction:column;gap:12px">
@@ -130,7 +148,7 @@ nav button[aria-pressed="true"]{background:var(--felt);color:#fff}
     <div class="stats">
       <div><b id="sScore">0</b><span data-t="score"></span></div>
       <div><b id="sStreak">0</b><span data-t="streak"></span></div>
-      <div><b id="sQ">1/20</b><span data-t="question"></span></div>
+      <div><b id="sQ">1/20</b><span id="sQlbl" data-t="question"></span></div>
     </div>
     <div class="stage" id="stage"></div>
     <div class="feedback" id="fb"></div>
@@ -154,6 +172,7 @@ const store = {
 // ---------- i18n ----------
 const T = {
   es:{read:"Leer",name:"Nombrar",ear:"Oído",prog:"Progreso",
+    game:"Juego",level:"Nivel",lives:"Vidas",d_game:"¿Qué nota es? Elige la respuesta antes de que se acabe el tiempo.",start:"Empezar",gameover:"Fin del juego",bestScore:"Récord: {n}",newBest:"¡Nuevo récord!",timeout:"¡Se acabó el tiempo! Era {n}",levelUp:"¡Nivel {n}!",r1:"3 vidas ❤️❤️❤️",r2:"Cada 8 aciertos subes de nivel: más notas y menos tiempo",r3:"Después de cada respuesta verás la tecla en el piano",
     d_read:"Toca en el piano la tecla de la nota que ves en el pentagrama.",
     d_name:"¿Qué nota es la tecla marcada en dorado?",
     d_ear:"Escucha la nota y encuéntrala en el piano. Vale cualquier octava.",
@@ -168,6 +187,7 @@ const T = {
     accuracy:"Precisión",answered:"Respondidas",best:"Mejor racha",reset:"Borrar progreso",sure:"Toca otra vez para confirmar",
     inTreble:"clave de Sol",inBass:"clave de Fa",rangeTxt:"Rango: {r}"},
   en:{read:"Read",name:"Name",ear:"Ear",prog:"Progress",
+    game:"Game",level:"Level",lives:"Lives",d_game:"Which note is it? Pick the answer before time runs out.",start:"Start",gameover:"Game over",bestScore:"Best: {n}",newBest:"New record!",timeout:"Time's up! It was {n}",levelUp:"Level {n}!",r1:"3 lives ❤️❤️❤️",r2:"Every 8 correct answers you level up: more notes, less time",r3:"After each answer you'll see the key on the piano",
     d_read:"Tap the piano key for the note shown on the staff.",
     d_name:"Which note is the key marked in gold?",
     d_ear:"Listen to the note and find it on the piano. Any octave counts.",
@@ -182,6 +202,7 @@ const T = {
     accuracy:"Accuracy",answered:"Answered",best:"Best streak",reset:"Reset progress",sure:"Tap again to confirm",
     inTreble:"treble clef",inBass:"bass clef",rangeTxt:"Range: {r}"},
   fr:{read:"Lire",name:"Nommer",ear:"Oreille",prog:"Progrès",
+    game:"Jeu",level:"Niveau",lives:"Vies",d_game:"Quelle est cette note ? Choisis la réponse avant la fin du temps.",start:"Commencer",gameover:"Partie terminée",bestScore:"Record : {n}",newBest:"Nouveau record !",timeout:"Temps écoulé ! C'était {n}",levelUp:"Niveau {n} !",r1:"3 vies ❤️❤️❤️",r2:"Tous les 8 bonnes réponses tu montes de niveau : plus de notes, moins de temps",r3:"Après chaque réponse tu verras la touche sur le piano",
     d_read:"Touche sur le piano la note affichée sur la portée.",
     d_name:"Quelle note est la touche marquée en doré ?",
     d_ear:"Écoute la note et trouve-la sur le piano. Toutes les octaves comptent.",
@@ -198,7 +219,7 @@ const T = {
 };
 const navLang = (navigator.language||'en').slice(0,2);
 const S = Object.assign({lang: T[navLang]?navLang:'en', clef:'treble', range:'basic', acc:false, naming:null, sound:true, exact:true, labels:false}, store.get('settings',{}));
-if (!S.naming) S.naming = S.lang==='en' ? 'abc' : 'solfege';
+if (!S.naming || !store.get('namingChosen',false)) S.naming = 'solfege';
 const t = (k, v={}) => (T[S.lang][k]||T.en[k]||k).replace(/\{(\w)\}/g,(_,x)=>v[x]);
 
 // ---------- music model ----------
@@ -222,11 +243,12 @@ const pcName = pc => { // name for a pitch class, with both spellings for black 
 function pool(){
   const clefs = S.clef==='both' ? ['treble','bass'] : [S.clef];
   const out = [];
+  const G = mode==='game' ? LEVELS[Math.min(gLevel,LEVELS.length)-1] : {range:S.range, acc:S.acc};
   for (const c of clefs){
-    const [lo,hi] = RANGES[c][S.range];
+    const [lo,hi] = RANGES[c][G.range];
     for (let d=lo; d<=hi; d++){
       out.push({...fromD(d), clef:c});
-      if (S.acc){
+      if (G.acc){
         const l = d%7;
         if ([0,1,3,4,5].includes(l)) out.push({...fromD(d,1), clef:c});
         if ([1,2,4,5,6].includes(l)) out.push({...fromD(d,-1), clef:c});
@@ -277,7 +299,9 @@ function playMidi(m, force=false){
 
 // ---------- state ----------
 const ROUND = 20;
-let mode = 'read', cur=null, last=null, locked=false, score=0, streak=0, qn=0, correctN=0, armed=false;
+const LEVELS = [{range:'basic',acc:false,time:9000},{range:'mid',acc:false,time:8000},{range:'wide',acc:false,time:7000},{range:'wide',acc:true,time:6500},{range:'wide',acc:true,time:5000}];
+let gLevel=1, lives=3, gCorrect=0, gStarted=false, gTimer=null, bestGame=store.get('bestGame',0);
+let mode = 'game', cur=null, last=null, locked=false, score=0, streak=0, qn=0, correctN=0, armed=false;
 const stats = store.get('stats', {}); let best = store.get('best', 0);
 
 function pick(){
@@ -353,6 +377,7 @@ function updStats(){ $('sScore').textContent=score; $('sStreak').textContent=str
 
 function newQuestion(){
   locked=false; clearKeys(); $('fb').textContent=''; $('fb').className='feedback';
+  if (mode==='game') return gameQuestion();
   if (qn>=ROUND) return showDone();
   cur = pick(); last = cur; updStats();
   const st=$('stage'), ans=$('answer'); ans.innerHTML=''; st.hidden=false;
@@ -374,6 +399,72 @@ function stafflessPrompt(){
   return `<div class="ear-box"><svg viewBox="0 0 120 60" width="120" aria-hidden="true"><rect x="40" y="4" width="40" height="52" rx="6" fill="var(--gold)"/><path d="M60 62 l-8 -10 h16z" fill="var(--gold)"/></svg><span class="desc">${t('d_name')}</span></div>`;
 }
 
+// ---------- game mode ----------
+function gameStats(){
+  $('sScore').textContent=score; $('sStreak').textContent=streak;
+  $('sQ').innerHTML='<span class="hearts">'+'♥'.repeat(lives)+'<span style="opacity:.25">'+'♥'.repeat(3-lives)+'</span></span>';
+  $('sQlbl').textContent=t('lives');
+  $('desc').textContent = t('level')+' '+gLevel+' · '+t('d_game');
+}
+function gameStart(){
+  clearTimeout(gTimer); gLevel=1; lives=3; gCorrect=0; score=0; streak=0; last=null; gStarted=true; buildKb(); gameQuestion();
+}
+function gameIntro(){
+  gStarted=false; clearTimeout(gTimer); gameStats(); $('answer').innerHTML=''; $('stage').hidden=false;
+  $('stage').innerHTML=`<div class="start"><svg viewBox="0 0 120 60" width="120" aria-hidden="true"><g fill="var(--felt)"><rect x="10" y="10" width="100" height="40" rx="6" fill="var(--ivory)" stroke="var(--line)"/><rect x="26" y="10" width="10" height="24"/><rect x="46" y="10" width="10" height="24"/><rect x="76" y="10" width="10" height="24"/></g></svg>
+   <ul><li>${t('r1')}</li><li>${t('r2')}</li><li>${t('r3')}</li></ul>
+   ${bestGame?`<span class="desc">${t('bestScore',{n:bestGame})}</span>`:''}
+   <button class="big-btn" id="goBtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>${t('start')}</button></div>`;
+  $('goBtn').addEventListener('click', gameStart);
+}
+function gameQuestion(){
+  if (!gStarted) return gameIntro();
+  if (lives<=0) return gameOver();
+  locked=false; clearKeys(); $('fb').textContent=''; $('fb').className='feedback';
+  cur = pick(); last = cur; gameStats();
+  const st=$('stage'); st.hidden=false; st.innerHTML = staffSVG(cur);
+  // 4 options: correct + 3 distinct distractors (names without octave)
+  const right = noteName(cur,false), names=new Set([right]), p=pool();
+  let guard=0; while (names.size<4 && guard++<200){ const n=p[Math.floor(Math.random()*p.length)]; names.add(noteName(n,false)); }
+  if (names.size<4) for (let l=0;l<7&&names.size<4;l++) names.add(letterName(l));
+  const opts=[...names].sort(()=>Math.random()-.5);
+  const time = LEVELS[Math.min(gLevel,LEVELS.length)-1].time;
+  $('answer').innerHTML = `<div class="timer"><i id="tBar"></i></div><div class="opts" style="margin-top:10px">`+opts.map(o=>`<button data-o="${o}">${o}</button>`).join('')+'</div>';
+  $('answer').querySelectorAll('.opts button').forEach(b=>b.addEventListener('click',()=>gameAnswer(b.dataset.o,b)));
+  const bar=$('tBar'); bar.style.transition='none'; bar.style.transform='scaleX(1)'; void bar.offsetWidth;
+  bar.style.transition=`transform ${time}ms linear`; bar.style.transform='scaleX(0)';
+  clearTimeout(gTimer); gTimer=setTimeout(()=>gameAnswer(null,null), time);
+  scrollToKey(midiOf(cur));
+}
+function gameAnswer(choice, btn){
+  if (locked) return; locked=true; clearTimeout(gTimer);
+  const bar=$('tBar'); if (bar){ const w=getComputedStyle(bar).transform; bar.style.transition='none'; bar.style.transform=w; }
+  const right=noteName(cur,false), ok = choice===right, m=midiOf(cur);
+  const id=keyId(cur); const s=stats[id]||{ok:0,n:0}; s.n++; if(ok) s.ok++; stats[id]=s; store.set('stats',stats);
+  playMidi(m, true);
+  const k=keyEl(m); if (k){ k.classList.add('ok'); scrollToKey(m); }
+  $('answer').querySelector(`.opts [data-o="${right}"]`)?.classList.add('ok');
+  if (btn && !ok) btn.classList.add('bad');
+  const fb=$('fb');
+  if (ok){
+    streak++; gCorrect++; score += 10*gLevel + Math.min(streak,10)*2; if (streak>best){ best=streak; store.set('best',best); }
+    fb.className='feedback ok'; fb.textContent = t('ok')+' '+noteName(cur);
+    if (gCorrect%8===0 && gLevel<LEVELS.length){ gLevel++; fb.innerHTML += ` · <span class="lvl-up">${t('levelUp',{n:gLevel})}</span>`; setTimeout(buildKb, 1100); }
+  } else {
+    streak=0; lives--;
+    fb.className='feedback bad'; fb.textContent = choice===null ? t('timeout',{n:noteName(cur)}) : t('was',{n:noteName(cur)});
+  }
+  gameStats(); $('sScore').classList.remove('pop'); void $('sScore').offsetWidth; if (ok) $('sScore').classList.add('pop');
+  setTimeout(gameQuestion, ok?1200:2200);
+}
+function gameOver(){
+  gStarted=false; clearKeys(); $('answer').innerHTML='';
+  const rec = score>bestGame; if (rec){ bestGame=score; store.set('bestGame',bestGame); }
+  $('stage').innerHTML = `<div class="done"><span class="desc">${t('gameover')} · ${t('level')} ${gLevel}</span><span class="num">${score}</span>
+    <span>${rec?'<span class="lvl-up">'+t('newBest')+'</span>':t('bestScore',{n:bestGame})}</span><button class="big-btn" id="againBtn">${t('again')}</button></div>`;
+  $('againBtn').addEventListener('click', gameStart);
+}
+
 function record(ok){
   const id=keyId(cur); const s=stats[id]||{ok:0,n:0}; s.n++; if(ok) s.ok++; stats[id]=s; store.set('stats',stats);
   if (ok){ score += 10 + Math.min(streak,5)*2; streak++; correctN++; if (streak>best){ best=streak; store.set('best',best);} }
@@ -388,7 +479,7 @@ function feedback(ok){
 function keyPress(m, el){
   playMidi(m);
   el.classList.add('press'); setTimeout(()=>el.classList.remove('press'),140);
-  if (locked || mode==='name' || mode==='prog') return;
+  if (locked || mode==='name' || mode==='prog' || mode==='game') return;
   const target = midiOf(cur);
   const ok = (mode==='ear' || !S.exact) ? ((m-target)%12===0) : m===target;
   locked=true; record(ok);
@@ -445,9 +536,9 @@ function renderSettings(){
     <div class="row"><label class="t">${t('naming')}</label>${seg('naming',[['solfege',SOL[S.lang].slice(0,3).join(' ')],['abc','C D E']])}</div>
     ${chk('acc','acc')}${chk('exact','exact')}${chk('labels','labels')}${chk('sound','sound')}
     <button class="big-btn" id="closeSet" style="align-self:flex-start">${t('close')}</button>`;
-  p.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{ S[b.dataset.k]=b.dataset.v; saveS(); renderSettings(); }));
+  p.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{ S[b.dataset.k]=b.dataset.v; if(b.dataset.k==='naming') store.set('namingChosen',true); saveS(); renderSettings(); }));
   p.querySelectorAll('input[type=checkbox]').forEach(c=>c.addEventListener('change',()=>{ S[c.dataset.k]=c.checked; saveS(); }));
-  $('closeSet').addEventListener('click',()=>setMode(mode==='prog'?'read':mode,true));
+  $('closeSet').addEventListener('click',()=>setMode(mode==='prog'?'game':mode,true));
 }
 function saveS(){ store.set('settings',S); }
 
@@ -459,7 +550,9 @@ function setMode(m, fromSettings=false){
   $('desc').textContent = m==='prog' ? '' : t('d_'+m);
   const game = m!=='prog';
   $('game').hidden = !game; $('game').style.display = game?'flex':'none'; $('prog').hidden = game;
-  if (game){ buildKb(); resetRound(); } else renderProg();
+  clearTimeout(gTimer); $('sQlbl').textContent = t('question'); $('game').classList.toggle('is-game', m==='game');
+  if (m==='game'){ gLevel=1; buildKb(); gameIntro(); }
+  else if (game){ buildKb(); resetRound(); } else renderProg();
 }
 $('modes').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) setMode(b.dataset.m); });
 $('setBtn').addEventListener('click', ()=>{
@@ -467,13 +560,13 @@ $('setBtn').addEventListener('click', ()=>{
   if (open){ $('game').style.display='none'; $('prog').hidden=true; $('settings').hidden=false; renderSettings(); }
   else setMode(mode);
 });
-$('langSel').addEventListener('change', e=>{ const wasDefault = (S.naming==='abc') === (S.lang==='en'); S.lang=e.target.value; if (wasDefault) S.naming = S.lang==='en'?'abc':'solfege'; saveS();
+$('langSel').addEventListener('change', e=>{ S.lang=e.target.value; saveS();
   if (!$('settings').hidden){ renderTexts(); renderSettings(); } else setMode(mode); });
 let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ if(mode!=='prog' && $('settings').hidden){ const tg=document.querySelector('#kb .target'); buildKb(); if(cur){ if(tg) keyEl(midiOf(cur))?.classList.add('target'); scrollToKey(midiOf(cur)); } } },200); });
 document.addEventListener('keydown', e=>{ if (mode==='name' && /^[a-gA-G]$/.test(e.key)){ const pc=STEP[ABC.indexOf(e.key.toUpperCase())]; const b=document.querySelector(`#answer [data-pc="${pc}"]`); if(b) b.click(); } });
 
-setMode('read');
-if (document.fonts) document.fonts.ready.then(()=>{ if (mode==='read' && cur && $('settings').hidden) $('stage').innerHTML=staffSVG(cur); });
+setMode('game');
+if (document.fonts) document.fonts.ready.then(()=>{ if ((mode==='read' || (mode==='game' && gStarted)) && cur && !locked && $('settings').hidden) $('stage').innerHTML=staffSVG(cur); });
 })();
 </script>
 
