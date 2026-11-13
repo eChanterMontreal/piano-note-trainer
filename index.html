@@ -132,7 +132,7 @@ nav button{font-size:13px;padding:8px 2px}
 
 <div class="wrap">
   <header>
-    <h1>Piano Note Trainer <small>v1.2</small></h1>
+    <h1>Piano Note Trainer <small>v1.3</small></h1>
     <div class="hdr-r">
       <select id="langSel" aria-label="Language"><option value="es">ES</option><option value="en">EN</option><option value="fr">FR</option></select>
       <button class="icon-btn" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
@@ -172,7 +172,7 @@ const store = {
 // ---------- i18n ----------
 const T = {
   es:{read:"Leer",name:"Nombrar",ear:"Oído",prog:"Progreso",
-    game:"Juego",level:"Nivel",lives:"Vidas",d_game:"¿Qué nota es? Elige la respuesta antes de que se acabe el tiempo.",start:"Empezar",gameover:"Fin del juego",bestScore:"Récord: {n}",newBest:"¡Nuevo récord!",timeout:"¡Se acabó el tiempo! Era {n}",levelUp:"¡Nivel {n}!",r1:"3 vidas ❤️❤️❤️",r2:"Cada 8 aciertos subes de nivel: más notas y menos tiempo",r3:"Después de cada respuesta verás la tecla en el piano",
+    game:"Juego",level:"Nivel",lives:"Vidas",d_game:"¿Qué nota es? Elige la respuesta correcta.",start:"Empezar",gameover:"Fin del juego",bestScore:"Récord: {n}",newBest:"¡Nuevo récord!",timeout:"¡Se acabó el tiempo! Era {n}",levelUp:"¡Nivel {n}!",r1:"3 vidas ❤️❤️❤️",r2:"Cada 8 aciertos subes de nivel y aparecen notas nuevas",r3:"Después de cada respuesta verás la tecla en el piano",
     d_read:"Toca en el piano la tecla de la nota que ves en el pentagrama.",
     d_name:"¿Qué nota es la tecla marcada en dorado?",
     d_ear:"Escucha la nota y encuéntrala en el piano. Vale cualquier octava.",
@@ -187,7 +187,7 @@ const T = {
     accuracy:"Precisión",answered:"Respondidas",best:"Mejor racha",reset:"Borrar progreso",sure:"Toca otra vez para confirmar",
     inTreble:"clave de Sol",inBass:"clave de Fa",rangeTxt:"Rango: {r}"},
   en:{read:"Read",name:"Name",ear:"Ear",prog:"Progress",
-    game:"Game",level:"Level",lives:"Lives",d_game:"Which note is it? Pick the answer before time runs out.",start:"Start",gameover:"Game over",bestScore:"Best: {n}",newBest:"New record!",timeout:"Time's up! It was {n}",levelUp:"Level {n}!",r1:"3 lives ❤️❤️❤️",r2:"Every 8 correct answers you level up: more notes, less time",r3:"After each answer you'll see the key on the piano",
+    game:"Game",level:"Level",lives:"Lives",d_game:"Which note is it? Pick the right answer.",start:"Start",gameover:"Game over",bestScore:"Best: {n}",newBest:"New record!",timeout:"Time's up! It was {n}",levelUp:"Level {n}!",r1:"3 lives ❤️❤️❤️",r2:"Every 8 correct answers you level up and new notes appear",r3:"After each answer you'll see the key on the piano",
     d_read:"Tap the piano key for the note shown on the staff.",
     d_name:"Which note is the key marked in gold?",
     d_ear:"Listen to the note and find it on the piano. Any octave counts.",
@@ -202,7 +202,7 @@ const T = {
     accuracy:"Accuracy",answered:"Answered",best:"Best streak",reset:"Reset progress",sure:"Tap again to confirm",
     inTreble:"treble clef",inBass:"bass clef",rangeTxt:"Range: {r}"},
   fr:{read:"Lire",name:"Nommer",ear:"Oreille",prog:"Progrès",
-    game:"Jeu",level:"Niveau",lives:"Vies",d_game:"Quelle est cette note ? Choisis la réponse avant la fin du temps.",start:"Commencer",gameover:"Partie terminée",bestScore:"Record : {n}",newBest:"Nouveau record !",timeout:"Temps écoulé ! C'était {n}",levelUp:"Niveau {n} !",r1:"3 vies ❤️❤️❤️",r2:"Tous les 8 bonnes réponses tu montes de niveau : plus de notes, moins de temps",r3:"Après chaque réponse tu verras la touche sur le piano",
+    game:"Jeu",level:"Niveau",lives:"Vies",d_game:"Quelle est cette note ? Choisis la bonne réponse.",start:"Commencer",gameover:"Partie terminée",bestScore:"Record : {n}",newBest:"Nouveau record !",timeout:"Temps écoulé ! C'était {n}",levelUp:"Niveau {n} !",r1:"3 vies ❤️❤️❤️",r2:"Tous les 8 bonnes réponses tu montes de niveau et de nouvelles notes apparaissent",r3:"Après chaque réponse tu verras la touche sur le piano",
     d_read:"Touche sur le piano la note affichée sur la portée.",
     d_name:"Quelle note est la touche marquée en doré ?",
     d_ear:"Écoute la note et trouve-la sur le piano. Toutes les octaves comptent.",
@@ -429,16 +429,12 @@ function gameQuestion(){
   if (names.size<4) for (let l=0;l<7&&names.size<4;l++) names.add(letterName(l));
   const opts=[...names].sort(()=>Math.random()-.5);
   const time = LEVELS[Math.min(gLevel,LEVELS.length)-1].time;
-  $('answer').innerHTML = `<div class="timer"><i id="tBar"></i></div><div class="opts" style="margin-top:10px">`+opts.map(o=>`<button data-o="${o}">${o}</button>`).join('')+'</div>';
+  $('answer').innerHTML = `<div class="opts">`+opts.map(o=>`<button data-o="${o}">${o}</button>`).join('')+'</div>';
   $('answer').querySelectorAll('.opts button').forEach(b=>b.addEventListener('click',()=>gameAnswer(b.dataset.o,b)));
-  const bar=$('tBar'); bar.style.transition='none'; bar.style.transform='scaleX(1)'; void bar.offsetWidth;
-  bar.style.transition=`transform ${time}ms linear`; bar.style.transform='scaleX(0)';
-  clearTimeout(gTimer); gTimer=setTimeout(()=>gameAnswer(null,null), time);
   scrollToKey(midiOf(cur));
 }
 function gameAnswer(choice, btn){
   if (locked) return; locked=true; clearTimeout(gTimer);
-  const bar=$('tBar'); if (bar){ const w=getComputedStyle(bar).transform; bar.style.transition='none'; bar.style.transform=w; }
   const right=noteName(cur,false), ok = choice===right, m=midiOf(cur);
   const id=keyId(cur); const s=stats[id]||{ok:0,n:0}; s.n++; if(ok) s.ok++; stats[id]=s; store.set('stats',stats);
   playMidi(m, true);
